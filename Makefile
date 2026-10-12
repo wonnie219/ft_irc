@@ -1,7 +1,7 @@
 NAME = ircserv
 
-CC = c++
-CFLAGS = -Wall -Wextra -Werror -std=c++98
+CXX = c++
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g
 INCDIR = include
 
 SRCS =	main.cpp \
@@ -12,10 +12,10 @@ OBJS = $(SRCS:%.cpp=%.o)
 all : $(NAME)
 
 %.o : %.cpp
-	$(CC) $(CFLAGS) -c $< -o $@ -I $(INCDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -I $(INCDIR)
 
 $(NAME) : $(OBJS)
-	$(CC) $(OBJS) -o $@
+	$(CXX) $(OBJS) -o $@
 
 clean:
 	rm -f $(OBJS)
