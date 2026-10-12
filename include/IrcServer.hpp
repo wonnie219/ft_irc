@@ -3,9 +3,15 @@
 
 #include <string>
 
+#include <IrcCore.hpp>
+#include <Server.hpp>
+
 class IrcServer
 {
 private:
+	IrcCore	_core;
+	Server	_server;
+
 	IrcServer();
 	IrcServer(const IrcServer &other);
 	IrcServer &operator=(const IrcServer &other);
