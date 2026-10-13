@@ -18,7 +18,8 @@ public:
     Server(int port, IrcCore& core);
     ~Server();
 
-    void run();
+    void    run();
+    void    acceptConnection();
 };
 
 #endif
