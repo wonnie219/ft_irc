@@ -5,7 +5,9 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g
 INCDIR = include
 
 SRCS =	main.cpp \
-		src/IrcServer.cpp
+		src/IrcServer.cpp\
+		src/Server.cpp \
+		src/IrcCore.cpp
 
 OBJS = $(SRCS:%.cpp=%.o)
 
