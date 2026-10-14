@@ -9,6 +9,8 @@
 #include <utility>
 
 #include "Server.hpp"
+#include "Common.hpp"
+#include "IrcCore.hpp"
 
 Server::Server(int port, IrcCore& core)
     : _port(port), _listenFd(-1), _core(core), _pollFds(), _connections()
@@ -142,39 +144,68 @@ void Server::acceptConnection() {
 }
 
 bool Server::handleRead(int fd) {
+    std::map<int, Connection>::iterator it = _connections.find(fd);
+
+    if (it == _connections.end()) {
+        disconnectClient(fd);
+        return false;
+    }
+
+    std::string& recvBuffer = it->second.getRecvBuffer();
     char buffer[4096];
 
-    ssize_t received = recv(fd, buffer, sizeof(buffer), 0);
+    while (true) {
+        ssize_t received = recv(fd, buffer, sizeof(buffer), 0);
 
-    if (received > 0) {
-        std::map<int, Connection>::iterator it = _connections.find(fd);
+        if (received > 0) {
+            recvBuffer.append(buffer, static_cast<std::size_t>(received));
 
-        if (it == _connections.end()) {
+            std::size_t pos = recvBuffer.find("\r\n");
+
+            while (pos != std::string::npos) {
+                if (pos > 510) {
+                    disconnectClient(fd);
+                    return false;
+                }
+
+                std::string line = recvBuffer.substr(0, pos);
+                recvBuffer.erase(0, pos + 2);
+
+                if (!line.empty()) {
+                    IncomingMessage message;
+
+                    message.fd = fd;
+                    message.line = line;
+
+                    _core.onMessage(message);
+                }
+
+                pos = recvBuffer.find("\r\n");
+            }
+
+        if (recvBuffer.size() > 511 || (recvBuffer.size() == 511 && recvBuffer[510] != '\r')) {
             disconnectClient(fd);
             return false;
         }
-
-        std::string& recvBuffer = it->second.getRecvBuffer();
-        const std::size_t maxBufferSize = 64 * 1024;
-        std::size_t receivedSize = static_cast<std::size_t>(received);
-
-        if (receivedSize > maxBufferSize || recvBuffer.size() > maxBufferSize - receivedSize) {
-            disconnectClient(fd);
-            return false;
-        }
-
-        recvBuffer.append(buffer, receivedSize);
 
         std::cout << "Received " << received << " bytes from fd " << fd << std::endl;
 
-        return true;
+        continue;
     }
 
-    if (received == -1 && (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK))
-        return true;
+        if (received == 0) {
+            disconnectClient(fd);
+            return false;
+        }
+        if (errno == EINTR)
+            continue;
 
-    disconnectClient(fd);
-    return false;
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+            return true;
+
+        disconnectClient(fd);
+        return false;
+    }
 }
 
 void Server::disconnectClient(int fd) {

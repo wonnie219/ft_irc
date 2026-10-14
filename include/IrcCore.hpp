@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "Common.hpp"
+
 class IrcCore
 {
 private:
@@ -15,6 +17,8 @@ private:
 public:
     explicit IrcCore(const std::string& password);
     ~IrcCore();
+
+    void onMessage(const IncomingMessage& message);
 };
 
 #endif
