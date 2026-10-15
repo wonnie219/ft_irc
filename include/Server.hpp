@@ -7,7 +7,8 @@
 
 #include "Connection.hpp"
 
-class IrcCore;
+class   IrcCore;
+struct  OutgoingMessage;
 
 class Server
 {
@@ -25,6 +26,7 @@ private:
 
     void    acceptConnection();
     bool    handleRead(int fd);
+    bool    handleWrite(int fd);
     void    disconnectClient(int fd);
 
 public:
@@ -32,6 +34,7 @@ public:
     ~Server();
 
     void    run();
+    void    queueMessage(const OutgoingMessage& message);
 };
 
 #endif
